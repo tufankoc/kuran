@@ -1,0 +1,1 @@
+# Bu dosya, bu dizinin bir Python paketi olduğunu belirtir. 

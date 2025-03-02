@@ -1,0 +1,516 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ surah.name_turkish }} Suresi - Kuran Öğrenme Uygulaması{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    {% csrf_token %}
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6">
+            <h1 class="text-2xl font-bold text-gray-900">{{ surah.name_turkish }} Suresi</h1>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">{{ surah.number }}. Sure, {{ surah.verse_count }} Ayet</p>
+            <div class="mt-4 flex space-x-2">
+                <button id="toggle-uthmani" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Harekeli Metin
+                </button>
+                
+                <!-- Transliterasyon verilerini çekmek için buton -->
+                <button id="fetch-transliterations" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Latin Harfleriyle Okunuşları Ekle
+                </button>
+                
+                <!-- Transliterasyon gösterme/gizleme butonu -->
+                <button id="toggle-transliteration" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                    Latin Harfleriyle Okunuşları Göster
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Renklendirme açıklaması -->
+    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+        <h3 class="text-blue-800 font-medium mb-2">Renklendirme Sistemi</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-green-500 mr-2"></div>
+                <span class="text-sm">Yeşil: Ezberlenmiş ayetler</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-yellow-500 mr-2"></div>
+                <span class="text-sm">Sarı: Bugün tekrar edilecek ayetler</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 bg-blue-500 mr-2"></div>
+                <span class="text-sm">Mavi: Yeni çalışılan ayetler</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <ul class="divide-y divide-gray-200">
+            {% for verse in verses %}
+            <li class="px-4 py-4 sm:px-6">
+                <div class="flex flex-col w-full">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {% for study in user.verse_studies.all %}
+                            {% if study.verse.id == verse.id %}
+                                {% if study.is_memorized %}
+                                    bg-green-100 text-green-800
+                                {% elif study.next_review_date|date:'Y-m-d' <= now|date:'Y-m-d' %}
+                                    bg-yellow-100 text-yellow-800
+                                {% else %}
+                                    bg-blue-100 text-blue-800
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if not user.verse_studies.filter.verse_id == verse.id %}
+                            bg-gray-100 text-gray-800
+                        {% endif %}">
+                            {{ verse.verse_number }}
+                        </span>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'quran:verse_detail' verse.id %}" class="text-indigo-600 hover:text-indigo-900 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </a>
+                            <button class="play-audio text-indigo-600 hover:text-indigo-900" data-surah="{{ surah.number }}" data-verse="{{ verse.verse_number }}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="verse-container w-full 
+                        {% for study in user.verse_studies.all %}
+                            {% if study.verse.id == verse.id %}
+                                {% if study.is_memorized %}
+                                    memorized
+                                {% elif study.next_review_date|date:'Y-m-d' <= now|date:'Y-m-d' %}
+                                    due-today
+                                {% else %}
+                                    new-verse
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}">
+                        <!-- Normal Arapça metin (varsayılan görünüm) -->
+                        <p class="standard-arabic-text text-right text-2xl font-arabic mb-2 break-words" dir="rtl">{{ verse.text_arabic }}</p>
+                        
+                        <!-- Harekeli Arapça metin (kelime kelime) -->
+                        <div class="uthmani-arabic-text arabic-text-uthmani hidden mb-2 break-words" data-verse-key="{{ surah.number }}:{{ verse.verse_number }}"></div>
+                        
+                        <!-- Latin harfleriyle okunuş (transliterasyon) -->
+                        {% if verse.text_transliteration %}
+                        <div class="transliteration-text hidden p-3 bg-yellow-50 rounded-md mb-2 break-words">
+                            <p class="text-base text-gray-800">{{ verse.text_transliteration }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="bg-green-50 p-3 rounded-md mt-2">
+                            <p class="text-base text-gray-800 break-words">{{ verse.text_turkish }}</p>
+                        </div>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="mt-6 flex justify-between">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Önceki
+        </a>
+        {% else %}
+        <span class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+            Önceki
+        </span>
+        {% endif %}
+        
+        <span class="text-sm text-gray-700">
+            Sayfa {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Sonraki
+        </a>
+        {% else %}
+        <span class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-300 bg-white cursor-not-allowed">
+            Sonraki
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<audio id="verseAudio" class="hidden" preload="none" playsinline>
+    <source src="" type="audio/mp3">
+    Tarayıcınız ses dosyasını desteklemiyor.
+</audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ses çalma için değişkenler
+        const audio = new Audio();
+        const playButtons = document.querySelectorAll('.play-audio');
+        let currentPlayingButton = null;
+        
+        // Harekeli metin için değişkenler
+        const toggleUthmaniButton = document.getElementById('toggle-uthmani');
+        const standardTexts = document.querySelectorAll('.standard-arabic-text');
+        const uthmaniTexts = document.querySelectorAll('.uthmani-arabic-text');
+        let uthmaniLoaded = false;
+        
+        // Transliterasyon için değişkenler
+        const fetchTransliterationsBtn = document.getElementById('fetch-transliterations');
+        const toggleTransliterationBtn = document.getElementById('toggle-transliteration');
+        const transliterationTexts = document.querySelectorAll('.transliteration-text');
+        let transliterationVisible = false;
+        
+        // Ses çalma butonları için olay dinleyicileri
+        playButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const surahNumber = this.getAttribute('data-surah').padStart(3, '0');
+                const verseNumber = this.getAttribute('data-verse').padStart(3, '0');
+                const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${surahNumber}${verseNumber}.mp3`;
+                
+                // Eğer aynı butona tekrar tıklandıysa sesi durdur
+                if (currentPlayingButton === this && !audio.paused) {
+                    audio.pause();
+                    resetButtonIcon(this);
+                    currentPlayingButton = null;
+                    return;
+                }
+                
+                // Ses kaynağını ayarla
+                audio.src = audioUrl;
+                audio.load();
+                
+                // Diğer butonları normal hale getir
+                resetAllButtonIcons();
+                
+                // Tıklanan butonu durdur butonuna dönüştür
+                this.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                `;
+                
+                // Ses çal
+                const playPromise = audio.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.then(_ => {
+                        // Çalma başarılı
+                        currentPlayingButton = this;
+                    }).catch(error => {
+                        console.error('Ses oynatma hatası:', error);
+                        
+                        // Mobil cihazlarda otomatik oynatma politikası hatası
+                        if (error.name === 'NotAllowedError') {
+                            alert('Mobil cihazlarda ses çalmak için önce sayfayla etkileşime geçmeniz gerekiyor. Lütfen ekrana dokunun ve tekrar deneyin.');
+                        } else {
+                            alert('Ses dosyası yüklenemedi veya oynatılamadı.');
+                        }
+                        
+                        resetButtonIcon(this);
+                    });
+                }
+            });
+        });
+        
+        // Ses bittiğinde butonu sıfırla
+        audio.addEventListener('ended', function() {
+            resetAllButtonIcons();
+            currentPlayingButton = null;
+        });
+        
+        // Tüm butonları sıfırlama fonksiyonu
+        function resetAllButtonIcons() {
+            playButtons.forEach(btn => {
+                resetButtonIcon(btn);
+            });
+        }
+        
+        // Tek bir butonu sıfırlama fonksiyonu
+        function resetButtonIcon(button) {
+            button.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            `;
+        }
+        
+        // Harekeli metin gösterme/gizleme
+        if (toggleUthmaniButton) {
+            toggleUthmaniButton.addEventListener('click', function() {
+                // Harekeli metin görünürlüğünü kontrol et
+                // standardTexts[0] yerine daha güvenli bir kontrol
+                const isUthmaniVisible = !uthmaniTexts[0].classList.contains('hidden');
+                
+                if (isUthmaniVisible) {
+                    // Harekeli metni gizle
+                    uthmaniTexts.forEach(text => text.classList.add('hidden'));
+                    standardTexts.forEach(text => text.classList.remove('hidden'));
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Harekeli Metin
+                    `;
+                } else {
+                    // Harekeli metni göster
+                    if (!uthmaniLoaded) {
+                        // Harekeli metni API'den çek
+                        fetchUthmaniText();
+                    } else {
+                        uthmaniTexts.forEach(text => text.classList.remove('hidden'));
+                        standardTexts.forEach(text => text.classList.add('hidden'));
+                    }
+                    
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Normal Metin
+                    `;
+                }
+            });
+        }
+        
+        // Harekeli metni API'den çekme fonksiyonu
+        function fetchUthmaniText() {
+            // Yükleniyor göstergesi
+            uthmaniTexts.forEach(text => {
+                text.innerHTML = '<div class="text-center py-4"><span class="text-gray-500">Harekeli metin yükleniyor...</span></div>';
+                text.classList.remove('hidden');
+            });
+            standardTexts.forEach(text => text.classList.add('hidden'));
+            
+            // Her ayet için API'den veri çek
+            const fetchPromises = Array.from(uthmaniTexts).map(text => {
+                const verseKey = text.getAttribute('data-verse-key');
+                if (!verseKey) {
+                    console.error('Ayet anahtarı bulunamadı:', text);
+                    text.innerHTML = '<div class="text-center py-4"><span class="text-red-500">Ayet bilgisi eksik. Lütfen sayfayı yenileyin.</span></div>';
+                    return Promise.resolve(); // Boş promise döndür
+                }
+                
+                console.log('Harekeli metin çekiliyor:', verseKey);
+                return fetch(`https://api.qurancdn.com/api/v4/verses/by_key/${verseKey}?words=true`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`API yanıt vermedi: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('API yanıtı:', data);
+                        if (data && data.verse && Array.isArray(data.verse.words)) {
+                            renderUthmaniText(text, data.verse.words);
+                            return true;
+                        } else {
+                            throw new Error('API verisi uygun formatta değil');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Harekeli metin yüklenirken hata:', error);
+                        text.innerHTML = `<div class="text-center py-4"><span class="text-red-500">Harekeli metin yüklenemedi: ${error.message}</span></div>`;
+                        return false;
+                    });
+            });
+            
+            Promise.all(fetchPromises)
+                .then(results => {
+                    // En az bir başarılı sonuç varsa, uthmaniLoaded'ı true yap
+                    if (results.some(result => result === true)) {
+                        uthmaniLoaded = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Harekeli metin yükleme hatası:', error);
+                });
+        }
+        
+        // Harekeli metni render etme fonksiyonu
+        function renderUthmaniText(container, words) {
+            container.innerHTML = '';
+            
+            const wordElements = words.map(word => {
+                if (word.char_type_name === 'word') {
+                    return `<span class="inline-block mx-1 text-2xl font-arabic">${word.text}</span>`;
+                } else if (word.char_type_name === 'end') {
+                    return `<span class="inline-block mx-1 text-xl">${word.text}</span>`;
+                }
+                return '';
+            }).join('');
+            
+            container.innerHTML = wordElements;
+            
+            // Harekeli metin yüklendi olarak işaretle
+            uthmaniLoaded = true;
+        }
+        
+        // Transliterasyon verilerini çekme işlemi
+        if (fetchTransliterationsBtn) {
+            fetchTransliterationsBtn.addEventListener('click', function() {
+                // Butonu devre dışı bırak ve yükleniyor göster
+                fetchTransliterationsBtn.disabled = true;
+                fetchTransliterationsBtn.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Okunuşlar Ekleniyor...
+                `;
+                
+                // CSRF token al
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // API isteği gönder
+                fetch('/quran/fetch-transliterations/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: `surah={{ surah.number }}&batch_size=10`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Başarılı mesajı göster
+                        const successMessage = document.createElement('div');
+                        successMessage.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded';
+                        successMessage.innerHTML = `
+                            <span class="font-bold">Başarılı!</span>
+                            <span class="block sm:inline">${data.message}</span>
+                        `;
+                        document.body.appendChild(successMessage);
+                        
+                        // 5 saniye sonra mesajı kaldır
+                        setTimeout(() => {
+                            successMessage.remove();
+                        }, 5000);
+                        
+                        // 10 saniye sonra sayfayı yenile
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 10000);
+                        
+                        // Butonu güncelle
+                        fetchTransliterationsBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Okunuşlar Ekleniyor (10 sn sonra yenilenecek)
+                        `;
+                    } else {
+                        // Hata mesajı göster
+                        const errorMessage = document.createElement('div');
+                        errorMessage.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
+                        errorMessage.innerHTML = `
+                            <span class="font-bold">Hata!</span>
+                            <span class="block sm:inline">${data.message}</span>
+                        `;
+                        document.body.appendChild(errorMessage);
+                        
+                        // 5 saniye sonra mesajı kaldır
+                        setTimeout(() => {
+                            errorMessage.remove();
+                        }, 5000);
+                        
+                        // Butonu eski haline getir
+                        fetchTransliterationsBtn.disabled = false;
+                        fetchTransliterationsBtn.innerHTML = `
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Latin Harfleriyle Okunuşları Ekle
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Transliterasyon verisi çekilirken hata:', error);
+                    
+                    // Hata mesajı göster
+                    const errorMessage = document.createElement('div');
+                    errorMessage.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded';
+                    errorMessage.innerHTML = `
+                        <span class="font-bold">Hata!</span>
+                        <span class="block sm:inline">Okunuşlar eklenirken bir hata oluştu. Lütfen tekrar deneyin.</span>
+                    `;
+                    document.body.appendChild(errorMessage);
+                    
+                    // 5 saniye sonra mesajı kaldır
+                    setTimeout(() => {
+                        errorMessage.remove();
+                    }, 5000);
+                    
+                    // Butonu eski haline getir
+                    fetchTransliterationsBtn.disabled = false;
+                    fetchTransliterationsBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2z" />
+                        </svg>
+                        Latin Harfleriyle Okunuşları Ekle
+                    `;
+                });
+            });
+        }
+        
+        // Transliterasyon verilerini gösterme/gizleme
+        if (toggleTransliterationBtn) {
+            // Eğer transliterasyon verileri varsa butonu göster
+            const hasTransliterations = document.querySelectorAll('.transliteration-text').length > 0;
+            if (hasTransliterations) {
+                toggleTransliterationBtn.classList.remove('hidden');
+            }
+            
+            toggleTransliterationBtn.addEventListener('click', function() {
+                transliterationVisible = !transliterationVisible;
+                
+                transliterationTexts.forEach(text => {
+                    if (transliterationVisible) {
+                        text.classList.remove('hidden');
+                    } else {
+                        text.classList.add('hidden');
+                    }
+                });
+                
+                // Buton metnini güncelle
+                if (transliterationVisible) {
+                    toggleTransliterationBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                        </svg>
+                        Latin Harfleriyle Okunuşları Gizle
+                    `;
+                } else {
+                    toggleTransliterationBtn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                        </svg>
+                        Latin Harfleriyle Okunuşları Göster
+                    `;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+ 

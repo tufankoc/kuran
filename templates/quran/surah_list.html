@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Sureler - Kuran Öğrenme Uygulaması{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-green-50">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Kuran-ı Kerim Sureleri
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Çalışmak istediğiniz sureyi seçin.
+                </p>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <div class="bg-white px-4 py-5 sm:p-6">
+                    <!-- Masaüstü görünümü - Tablo -->
+                    <div class="hidden md:flex flex-col">
+                        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                            <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                                <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    No
+                                                </th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Sure Adı
+                                                </th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Arapça
+                                                </th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Ayet Sayısı
+                                                </th>
+                                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    İndiği Yer
+                                                </th>
+                                                <th scope="col" class="relative px-6 py-3">
+                                                    <span class="sr-only">Detay</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            {% for surah in surahs %}
+                                                <tr>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {{ surah.number }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            {{ surah.name_turkish }}
+                                                        </div>
+                                                        <div class="text-sm text-gray-500">
+                                                            {{ surah.name_meaning }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <div class="text-lg font-medium arabic-text">
+                                                            {{ surah.name_arabic }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {{ surah.verse_count }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if surah.revelation_place == 'Mekke' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                                            {{ surah.revelation_place }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        <a href="{% url 'quran:surah_detail' surah.number %}" class="text-green-600 hover:text-green-900 mr-2">
+                                                            Detay
+                                                        </a>
+                                                        <button class="text-purple-600 hover:text-purple-900 mr-2 transliteration-btn" data-surah-id="{{ surah.number }}">
+                                                            Okunuş
+                                                        </button>
+                                                        <a href="{% url 'repetition:add_entire_surah' surah.number %}" class="text-green-600 hover:text-green-900">
+                                                            Çalışmaya Ekle
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobil görünümü - Kartlar -->
+                    <div class="md:hidden space-y-4">
+                        {% for surah in surahs %}
+                        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-4">
+                                <div class="flex justify-between items-center mb-3">
+                                    <div class="flex items-center">
+                                        <span class="bg-green-100 text-green-800 text-xs font-medium px-3 py-1.5 rounded-full mr-2 min-w-[24px] text-center">{{ surah.number }}</span>
+                                        <h3 class="text-lg font-medium text-gray-900">{{ surah.name_turkish }}</h3>
+                                    </div>
+                                    <span class="px-3 py-1.5 inline-flex text-xs font-medium rounded-full {% if surah.revelation_place == 'Mekke' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ surah.revelation_place }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex justify-between items-center mb-4">
+                                    <div class="text-lg font-medium arabic-text text-right">
+                                        {{ surah.name_arabic }}
+                                    </div>
+                                    <div class="text-sm font-medium text-gray-500 ml-3 bg-gray-100 px-3 py-1 rounded-full">
+                                        {{ surah.verse_count }} ayet
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-3 gap-3 mt-4">
+                                    <a href="{% url 'quran:surah_detail' surah.number %}" class="flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-center py-3 px-2 rounded-md text-sm font-medium transition-colors shadow-sm">
+                                        Detay
+                                    </a>
+                                    <button class="flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white py-3 px-2 rounded-md text-sm font-medium transition-colors shadow-sm transliteration-btn" data-surah-id="{{ surah.number }}">
+                                        Okunuş
+                                    </button>
+                                    <a href="{% url 'repetition:add_entire_surah' surah.number %}" class="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-center py-3 px-2 rounded-md text-sm font-medium transition-colors shadow-sm">
+                                        Çalışmaya Ekle
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Transliterasyon butonları
+        const transliterationButtons = document.querySelectorAll('.transliteration-btn');
+        transliterationButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const surahId = this.getAttribute('data-surah-id');
+                
+                // Kullanıcıya bilgi ver ve indirme işlemini başlat
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium">Okunuş Bilgisi</h3>
+                            <button class="text-gray-500 hover:text-gray-700 close-modal">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mt-2 bg-gray-50 p-4 rounded-lg">
+                            <p class="text-gray-700">Bu sure için okunuş bilgisi henüz indirilmemiş. Okunuş bilgisini indirmek ister misiniz?</p>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mr-2 close-modal">
+                                İptal
+                            </button>
+                            <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 download-transliteration" data-surah-id="${surahId}">
+                                Okunuşları İndir
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Modal kapatma
+                const closeButtons = modal.querySelectorAll('.close-modal');
+                closeButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        document.body.removeChild(modal);
+                    });
+                });
+                
+                // Okunuşları indirme
+                modal.querySelector('.download-transliteration').addEventListener('click', function() {
+                    const surahId = this.getAttribute('data-surah-id');
+                    
+                    // İndirme butonunu güncelle
+                    this.innerHTML = '<span class="flex items-center"><svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>İndiriliyor...</span>';
+                    this.disabled = true;
+                    
+                    // İptal butonunu devre dışı bırak
+                    const cancelButton = modal.querySelector('.close-modal:not(:first-child)');
+                    if (cancelButton) {
+                        cancelButton.disabled = true;
+                        cancelButton.classList.add('opacity-50');
+                    }
+                    
+                    fetch('/quran/fetch-transliterations/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: `surah=${surahId}&batch_size=10`
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Modal içeriğini güncelle
+                            const modalContent = modal.querySelector('.bg-gray-50');
+                            modalContent.innerHTML = '<p class="text-green-700">Okunuşlar başarıyla indirildi! Sayfayı yenilemek ister misiniz?</p>';
+                            
+                            // Butonları güncelle
+                            const buttonContainer = modal.querySelector('.mt-4.flex');
+                            buttonContainer.innerHTML = `
+                                <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 mr-2 close-modal">
+                                    Kapat
+                                </button>
+                                <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 refresh-page">
+                                    Sayfayı Yenile
+                                </button>
+                            `;
+                            
+                            // Yeni butonlara event listener ekle
+                            modal.querySelector('.close-modal').addEventListener('click', function() {
+                                document.body.removeChild(modal);
+                            });
+                            
+                            modal.querySelector('.refresh-page').addEventListener('click', function() {
+                                window.location.reload();
+                            });
+                        } else {
+                            throw new Error('Okunuşlar indirilemedi');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Hata:', error);
+                        
+                        // Hata durumunda modal içeriğini güncelle
+                        const modalContent = modal.querySelector('.bg-gray-50');
+                        modalContent.innerHTML = '<p class="text-red-700">Okunuşlar indirilemedi. Lütfen daha sonra tekrar deneyin.</p>';
+                        
+                        // Butonları güncelle
+                        const buttonContainer = modal.querySelector('.mt-4.flex');
+                        buttonContainer.innerHTML = `
+                            <button class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 close-modal">
+                                Kapat
+                            </button>
+                        `;
+                        
+                        // Yeni butona event listener ekle
+                        modal.querySelector('.close-modal').addEventListener('click', function() {
+                            document.body.removeChild(modal);
+                        });
+                    });
+                });
+            });
+        });
+        
+        // CSRF token alma fonksiyonu
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %} 

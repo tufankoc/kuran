@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Ana Sayfa - Kuran Öğrenme Uygulaması{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+        <h1 class="text-3xl font-bold text-gray-900">Kuran Öğrenme Uygulaması</h1>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Aralıklı tekrar yöntemiyle Kuran öğrenin</p>
+    </div>
+    
+    <div class="border-t border-gray-200">
+        <div class="bg-green-50 px-4 py-5 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6">
+            <div class="text-sm font-medium text-gray-500">
+                <h2 class="text-xl font-semibold text-green-700 mb-4">Aralıklı Tekrar Nedir?</h2>
+                <p class="text-gray-700 mb-2">Aralıklı tekrar, bilgileri uzun süreli hafızaya aktarmak için bilimsel olarak kanıtlanmış bir öğrenme tekniğidir.</p>
+                <p class="text-gray-700 mb-2">Bu yöntem, bilgileri giderek artan aralıklarla tekrar etmenizi sağlayarak, hafızanızın daha verimli çalışmasını sağlar.</p>
+                <p class="text-gray-700">Kuran ayetlerini ezberlemek ve anlamak için ideal bir yöntemdir.</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <img src="https://cdn.pixabay.com/photo/2018/05/10/08/49/quran-3387532_1280.jpg" alt="Kuran" class="rounded-lg shadow-md w-full h-auto">
+            </div>
+        </div>
+        
+        <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6">
+            <h2 class="text-xl font-semibold text-green-700 mb-4">Nasıl Çalışır?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white mb-4">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">1. Ayet Seçin</h3>
+                    <p class="text-gray-600">Çalışmak istediğiniz ayetleri seçin veya sistemin size önerdiği ayetlerle başlayın.</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white mb-4">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">2. Ezberleyin</h3>
+                    <p class="text-gray-600">Arapça metni ezberleyin, anlamını öğrenin ve kendinizi değerlendirin.</p>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <div class="flex items-center justify-center h-12 w-12 rounded-md bg-green-500 text-white mb-4">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">3. Tekrar Edin</h3>
+                    <p class="text-gray-600">Sistem, hatırlama düzeyinize göre en uygun zamanda tekrar etmenizi sağlar.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-green-50 px-4 py-5 sm:px-6">
+            <h2 class="text-xl font-semibold text-green-700 mb-4">Özellikler</h2>
+            <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                <li>Kuran ayetlerini Arapça olarak ezberleme</li>
+                <li>Türkçe mealleri ile anlamını öğrenme</li>
+                <li>Kişiselleştirilmiş tekrar zamanlaması</li>
+                <li>İlerleme takibi ve istatistikler</li>
+                <li>Günlük çalışma planı</li>
+                <li>Mobil uyumlu tasarım</li>
+            </ul>
+        </div>
+        
+        <div class="bg-white px-4 py-5 sm:px-6 text-center">
+            {% if user.is_authenticated %}
+                <a href="{% url 'repetition:dashboard' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Çalışmaya Başla
+                </a>
+            {% else %}
+                <a href="{% url 'users:register' %}" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Hemen Kaydol
+                </a>
+                <p class="mt-2 text-sm text-gray-500">Zaten hesabınız var mı? <a href="{% url 'users:login' %}" class="font-medium text-green-600 hover:text-green-500">Giriş yapın</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

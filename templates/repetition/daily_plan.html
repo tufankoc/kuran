@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Günlük Çalışma Planı - Kuran Öğrenme Uygulaması{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 bg-green-50">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Günlük Çalışma Planı
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Bugün çalışmanız gereken ayetler.
+                </p>
+            </div>
+            
+            <div class="border-t border-gray-200">
+                <div class="bg-white px-4 py-5 sm:p-6">
+                    <div class="mb-6">
+                        <h4 class="text-lg font-medium text-gray-900">Özet</h4>
+                        <div class="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">
+                                        Tekrar Edilecek Ayetler
+                                    </dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                        {{ verses_to_review.count }}
+                                    </dd>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">
+                                        Yeni Ayetler
+                                    </dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                        {{ new_verses|length }}
+                                    </dd>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white overflow-hidden shadow rounded-lg">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <dt class="text-sm font-medium text-gray-500 truncate">
+                                        Toplam
+                                    </dt>
+                                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                                        {{ total_verses }}
+                                    </dd>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if not active_session %}
+                    <div class="mb-6">
+                        <div class="rounded-md bg-yellow-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-yellow-800">
+                                        Aktif çalışma oturumu yok
+                                    </h3>
+                                    <div class="mt-2 text-sm text-yellow-700">
+                                        <p>
+                                            Çalışmaya başlamak için önce bir oturum başlatmalısınız.
+                                        </p>
+                                    </div>
+                                    <div class="mt-4">
+                                        <div class="-mx-2 -my-1.5 flex">
+                                            <a href="{% url 'repetition:start_session' %}" class="bg-yellow-50 px-2 py-1.5 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600">
+                                                Oturum Başlat
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if verses_to_review.count > 0 %}
+                    <div class="mb-8">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Tekrar Edilecek Ayetler</h4>
+                        <div class="mt-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Tekrar Edilecek Ayetler</h3>
+                            <div class="hidden md:block ayet-numaralari-grid flex flex-wrap gap-2 max-w-full">
+                                {% for verse in verses_to_review %}
+                                    <a href="{% url 'repetition:review_verse' verse.id %}" class="ayet-numarasi inline-flex items-center justify-center w-10 h-10 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full hover:bg-yellow-200 transition-colors hover:scale-110 transform">
+                                        {{ verse.verse_number }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            <div class="md:hidden">
+                                <a href="{% url 'repetition:review_verse' verses_to_review.0.id %}" class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-md hover:bg-yellow-200">
+                                    <span class="font-bold">{{ verses_to_review.count }}</span> ayet tekrar edilecek
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if new_verses|length > 0 %}
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Yeni Ayetler</h4>
+                        <div class="mt-4">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Yeni Ayetler</h3>
+                            <div class="hidden md:block ayet-numaralari-grid flex flex-wrap gap-2 max-w-full">
+                                {% for verse in new_verses %}
+                                    <a href="{% url 'repetition:study_verse' verse.id %}" class="ayet-numarasi inline-flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-800 text-sm font-medium rounded-full hover:bg-blue-200 transition-colors hover:scale-110 transform">
+                                        {{ verse.verse_number }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            <div class="md:hidden">
+                                <a href="{% url 'repetition:study_verse' new_verses.0.id %}" class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 text-sm font-medium rounded-md hover:bg-blue-200">
+                                    <span class="font-bold">{{ new_verses|length }}</span> yeni ayet
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

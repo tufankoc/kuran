@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ verse.surah.name_turkish }} {{ verse.verse_number }} - Kuran Öğrenme Uygulaması{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+        <div class="flex justify-between items-start mb-4">
+            <h1 class="text-2xl font-bold">
+                {{ verse.surah.name_turkish }} ({{ verse.surah.number }}) - Ayet {{ verse.verse_number }}
+            </h1>
+            <div class="flex space-x-2">
+                {% if user.is_authenticated %}
+                <form method="post" action="{% url 'repetition:start_new_verse' verse.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm">
+                        Çalışmaya Ekle
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'quran:surah_detail' verse.surah.number %}" class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm">
+                    Sureye Git
+                </a>
+            </div>
+        </div>
+        
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6 
+            {% for study in user.verse_studies.all %}
+                {% if study.verse.id == verse.id %}
+                    {% if study.is_memorized %}
+                        memorized
+                    {% elif study.next_review_date|date:'Y-m-d' <= now|date:'Y-m-d' %}
+                        due-today
+                    {% else %}
+                        new-verse
+                    {% endif %}
+                {% endif %}
+            {% endfor %}">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    {{ verse.surah.name_turkish }} Suresi, 
+                    <span class="
+                    {% for study in user.verse_studies.all %}
+                        {% if study.verse.id == verse.id %}
+                            {% if study.is_memorized %}
+                                text-green-600
+                            {% elif study.next_review_date|date:'Y-m-d' <= now|date:'Y-m-d' %}
+                                text-yellow-600
+                            {% else %}
+                                text-blue-600
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}">
+                    {{ verse.verse_number }}
+                    </span>. Ayet
+                </h3>
+                <div class="flex space-x-2">
+                    <button id="toggle-uthmani" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Harekeli Metin
+                    </button>
+                    <button id="playAudio" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Dinle
+                    </button>
+                </div>
+            </div>
+            <div class="border-t border-gray-200">
+                <dl>
+                    <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">
+                            Arapça Metin
+                        </dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:mt-0">
+                            <div id="arabic-text-container" class="text-right" dir="rtl">
+                                <p id="standard-arabic-text" class="text-2xl font-arabic">{{ verse.text_arabic }}</p>
+                                <div id="uthmani-arabic-text" class="hidden arabic-text-uthmani"></div>
+                            </div>
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-2">Okunuşu (Latin Harfleriyle)</h2>
+            <div class="p-4 bg-gray-50 rounded-lg text-lg">
+                {{ verse.text_transliteration|default:"Okunuş bilgisi mevcut değil." }}
+            </div>
+        </div>
+        
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-green-700 mb-2">Türkçe Meali</h2>
+            <div class="p-4 bg-green-50 rounded-lg">
+                <p class="text-lg leading-relaxed">{{ verse.text_turkish }}</p>
+            </div>
+        </div>
+        
+        {% if verse.tafsirs.exists %}
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-2">Tefsir</h2>
+            {% for tafsir in verse.tafsirs.all %}
+            <div class="p-4 bg-gray-50 rounded-lg mb-2">
+                <h3 class="font-medium mb-1">{{ tafsir.author }}</h3>
+                <p>{{ tafsir.text }}</p>
+                {% if tafsir.source %}
+                <p class="text-sm text-gray-500 mt-2">Kaynak: {{ tafsir.source }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="flex justify-between mt-8">
+            {% if prev_verse %}
+            <a href="{% url 'quran:verse_detail' prev_verse.id %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded">
+                &larr; Önceki Ayet
+            </a>
+            {% else %}
+            <div></div>
+            {% endif %}
+            
+            {% if next_verse %}
+            <a href="{% url 'quran:verse_detail' next_verse.id %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded">
+                Sonraki Ayet &rarr;
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<audio id="verseAudio" style="display: none;">
+    <source src="" type="audio/mpeg">
+    Tarayıcınız ses özelliğini desteklemiyor.
+</audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const playButton = document.getElementById('playAudio');
+        const audio = document.getElementById('verseAudio');
+        
+        // Django değişkenlerini JavaScript'e aktar
+        const surahNumber = "{{ verse.surah.number }}";
+        const verseNumber = "{{ verse.verse_number }}";
+        
+        // Ses URL'sini ayarla
+        const paddedSurahNumber = surahNumber.toString().padStart(3, '0');
+        const paddedVerseNumber = verseNumber.toString().padStart(3, '0');
+        const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${paddedSurahNumber}${paddedVerseNumber}.mp3`;
+        audio.querySelector('source').src = audioUrl;
+        
+        playButton.addEventListener('click', function() {
+            if (audio.paused) {
+                audio.load(); // Ses dosyasını yükle
+                audio.play().catch(e => {
+                    console.error('Ses oynatma hatası:', e);
+                    alert('Ses dosyası yüklenemedi veya oynatılamadı.');
+                });
+                playButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Durdur
+                `;
+            } else {
+                audio.pause();
+                playButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Dinle
+                `;
+            }
+        });
+        
+        // Ses bittiğinde butonu sıfırla
+        audio.addEventListener('ended', function() {
+            playButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Dinle
+            `;
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ses çalma için değişkenler
+        const playButton = document.getElementById('playAudio');
+        const audio = document.getElementById('verseAudio');
+        
+        // Harekeli metin için değişkenler
+        const toggleUthmaniButton = document.getElementById('toggle-uthmani');
+        const standardArabicText = document.getElementById('standard-arabic-text');
+        const uthmaniArabicText = document.getElementById('uthmani-arabic-text');
+        let uthmaniTextLoaded = false;
+        let currentWordIndex = -1;
+        let wordElements = [];
+        
+        // Django değişkenlerini JavaScript'e aktar
+        const surahNumber = "{{ verse.surah.number }}";
+        const verseNumber = "{{ verse.verse_number }}";
+        
+        // Ses URL'sini ayarla
+        const paddedSurahNumber = surahNumber.toString().padStart(3, '0');
+        const paddedVerseNumber = verseNumber.toString().padStart(3, '0');
+        const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${paddedSurahNumber}${paddedVerseNumber}.mp3`;
+        audio.querySelector('source').src = audioUrl;
+        
+        // Harekeli metin gösterme/gizleme
+        if (toggleUthmaniButton) {
+            toggleUthmaniButton.addEventListener('click', function() {
+                const isUthmaniVisible = !uthmaniArabicText.classList.contains('hidden');
+                
+                if (isUthmaniVisible) {
+                    // Harekeli metni gizle
+                    uthmaniArabicText.classList.add('hidden');
+                    standardArabicText.classList.remove('hidden');
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Harekeli Metin
+                    `;
+                } else {
+                    // Harekeli metni göster
+                    if (!uthmaniTextLoaded) {
+                        // Harekeli metni API'den çek
+                        fetchUthmaniText();
+                    } else {
+                        uthmaniArabicText.classList.remove('hidden');
+                        standardArabicText.classList.add('hidden');
+                    }
+                    
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Normal Metin
+                    `;
+                }
+            });
+        }
+        
+        // Harekeli metni API'den çekme fonksiyonu
+        function fetchUthmaniText() {
+            const verseKey = `${surahNumber}:${verseNumber}`;
+            
+            // Yükleniyor göstergesi
+            uthmaniArabicText.innerHTML = '<div class="text-center py-4"><span class="text-gray-500">Harekeli metin yükleniyor...</span></div>';
+            uthmaniArabicText.classList.remove('hidden');
+            standardArabicText.classList.add('hidden');
+            
+            // API'den kelime kelime veriyi çek
+            fetch(`https://api.quran.com/api/v4/verses/by_key/${verseKey}?words=true`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('API yanıt vermedi');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.verse && data.verse.words) {
+                        renderUthmaniText(data.verse.words);
+                        uthmaniTextLoaded = true;
+                    } else {
+                        throw new Error('API verisi uygun formatta değil');
+                    }
+                })
+                .catch(error => {
+                    console.error('Harekeli metin yüklenirken hata:', error);
+                    uthmaniArabicText.innerHTML = '<div class="text-center py-4"><span class="text-red-500">Harekeli metin yüklenemedi. Lütfen tekrar deneyin.</span></div>';
+                });
+        }
+        
+        // Harekeli metni render etme fonksiyonu
+        function renderUthmaniText(words) {
+            uthmaniArabicText.innerHTML = '';
+            wordElements = [];
+            
+            words.forEach((word, index) => {
+                // Sadece kelime tipindeki öğeleri göster (ayırıcıları ve sonu gösterme)
+                if (word.char_type_name === 'word') {
+                    const wordElement = document.createElement('span');
+                    wordElement.className = 'word-by-word';
+                    wordElement.textContent = word.text_uthmani || word.text;
+                    wordElement.dataset.position = index;
+                    wordElement.dataset.audioUrl = word.audio_url;
+                    
+                    // Kelime çevirisi varsa ekle
+                    if (word.translation && word.translation.text) {
+                        const translationElement = document.createElement('span');
+                        translationElement.className = 'word-translation';
+                        translationElement.textContent = word.translation.text;
+                        wordElement.appendChild(translationElement);
+                    }
+                    
+                    // Kelimeye tıklandığında ses çalma
+                    wordElement.addEventListener('click', function() {
+                        highlightWord(index);
+                        playWordAudio(word.audio_url);
+                    });
+                    
+                    uthmaniArabicText.appendChild(wordElement);
+                    wordElements.push(wordElement);
+                }
+            });
+        }
+        
+        // Kelimeyi vurgulama fonksiyonu
+        function highlightWord(index) {
+            // Önceki vurgulamayı kaldır
+            wordElements.forEach(el => el.classList.remove('active'));
+            
+            // Yeni kelimeyi vurgula
+            if (index >= 0 && index < wordElements.length) {
+                wordElements[index].classList.add('active');
+                currentWordIndex = index;
+            }
+        }
+        
+        // Kelime sesini çalma fonksiyonu
+        function playWordAudio(audioUrl) {
+            if (!audioUrl) return;
+            
+            const wordAudio = new Audio(`https://audio.qurancdn.com/${audioUrl}`);
+            wordAudio.addEventListener('ended', function() {
+                // Ses bittiğinde bir sonraki kelimeye geç
+                if (currentWordIndex < wordElements.length - 1) {
+                    const nextIndex = currentWordIndex + 1;
+                    highlightWord(nextIndex);
+                    
+                    const nextAudioUrl = wordElements[nextIndex].dataset.audioUrl;
+                    if (nextAudioUrl) {
+                        setTimeout(() => {
+                            playWordAudio(nextAudioUrl);
+                        }, 300); // Kelimeler arası kısa bir bekleme
+                    }
+                }
+            });
+            
+            wordAudio.play().catch(error => {
+                console.error('Kelime sesi çalınırken hata:', error);
+            });
+        }
+        
+        // Ses çalma butonu için olay dinleyicisi
+        playButton.addEventListener('click', function() {
+            if (audio.paused) {
+                audio.load(); // Ses dosyasını yükle
+                audio.play().catch(e => {
+                    console.error('Ses oynatma hatası:', e);
+                    alert('Ses dosyası yüklenemedi veya oynatılamadı.');
+                });
+                
+                // Harekeli metin görünüyorsa ilk kelimeyi vurgula
+                if (!uthmaniArabicText.classList.contains('hidden') && wordElements.length > 0) {
+                    highlightWord(0);
+                }
+                
+                playButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Durdur
+                `;
+            } else {
+                audio.pause();
+                playButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Dinle
+                `;
+            }
+        });
+        
+        // Ses bittiğinde butonu sıfırla
+        audio.addEventListener('ended', function() {
+            playButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Dinle
+            `;
+            
+            // Kelime vurgulamasını sıfırla
+            wordElements.forEach(el => el.classList.remove('active'));
+            currentWordIndex = -1;
+        });
+        
+        // Ses çalınmaya başladığında kelime vurgulamayı başlat
+        audio.addEventListener('play', function() {
+            if (!uthmaniArabicText.classList.contains('hidden') && wordElements.length > 0) {
+                // İlk kelimeyi vurgula
+                highlightWord(0);
+            }
+        });
+    });
+</script>
+{% endblock %} 
